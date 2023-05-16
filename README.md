@@ -22,3 +22,8 @@ For this task I needed to install the kubernetes CLU plugin
 I've set up jeninks pipeline to use github repo and made a pipline script unfortunately it didn't work at first but after many tries to modify the Jenkinsfile it worked
 
 ![it worked XD](https://github.com/DekoTheKing/Final-Project-Assessment-for-Scalefocus-Academy/assets/101192308/cbdcc53a-1d53-4448-b44c-0bc2a58ae9de)
+
+After this I did a manual port forwarding with same command above
+And here is the output of the final result.
+
+![final wordpress](https://github.com/DekoTheKing/Final-Project-Assessment-for-Scalefocus-Academy/assets/101192308/15b32d7c-f605-412c-97dd-25709f20794e)
