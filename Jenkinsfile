@@ -1,26 +1,25 @@
 pipeline {
     agent any
-
+    
     stages {
         stage('Check and Create Namespace') {
             steps {
                 script {
-                    def namespaceExists = sh(script: 'kubectl get namespace wp --no-headers --output=go-template="{{.metadata.name}}"', returnStdout: true).trim()
-
-                    if (namespaceExists.empty) {
-                        sh 'kubectl create namespace wp'
+                    def namespace ='wp'
+                    def namespaceExists = false
+                    
+                    try {
+                        sh(returnStdout: true, script: "kubectl get namespaces ${namespace} | grep -w ${namespace}").trim()
+                        namespaceExists = true
+                    } catch (Exception e) {
+                        echo "Namespace $namespace does not exist."
                     }
-                }
-            }
-        }
-
-        stage('Check and Install WordPress Chart') {
-            steps {
-                script {
-                    def chartExists = sh(script: 'helm ls --short -n wp | grep -q "wordpress"', returnStatus: true)
-
-                    if (chartExists != 0) {
-                        sh 'helm install my-wordpress bitnami/wordpress --namespace wp'
+                    
+                    if (namespaceExists) {
+                        echo "Namespace $namespace already exists."
+                    } else {
+                        echo "Namespace $namespace does not exist. Creating..."
+                        sh "kubectl create namespace $namespace"
                     }
                 }
             }
