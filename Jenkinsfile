@@ -1,22 +1,30 @@
+def CHART_NAME = 'final-project-wp-scalefocus'
+def RELEASE_NAME = 'my-wordpress'
+def CHART_PATH = 'wordpress/Chart.yaml'
+def VALUES_FILE = 'wordpress/values.yaml'
+def NAMESPACE = 'wp'
+def KUBECONFIG = 'C:/Users/dejan/.kube/config'
+def HELM_PATH = 'C:/ProgramData/chocolatey/bin/helm.exe'
+
 pipeline {
     agent any
     environment {
-        CHART_NAME = 'final-project-wp-scalefocus'
-        RELEASE_NAME = 'my-wordpress'
-        CHART_PATH = 'wordpress/Chart.yaml'
-        VALUES_FILE = 'wordpress/values.yaml'
-        NAMESPACE = 'wp'
-        KUBECONFIG = 'C:/Users/dejan/.kube/config'
-        HELM_PATH = 'C:/ProgramData/chocolatey/bin/helm.exe'
+        CHART_NAME_ENV = CHART_NAME
+        RELEASE_NAME_ENV = RELEASE_NAME
+        CHART_PATH_ENV = CHART_PATH
+        VALUES_FILE_ENV = VALUES_FILE
+        NAMESPACE_ENV = NAMESPACE
+        KUBECONFIG_ENV = KUBECONFIG
+        HELM_PATH_ENV = HELM_PATH
     }
     stages {
         stage('Check and Create Namespace') {
             steps {
                 script {
-                    def namespaceExists = bat(script: "kubectl --kubeconfig %KUBECONFIG% get namespace %NAMESPACE% --no-headers --output=go-template=\"{{.metadata.name}}\"", returnStdout: true).trim()
+                    def namespaceExists = sh(script: "kubectl --kubeconfig \$KUBECONFIG_ENV get namespace \$NAMESPACE_ENV --no-headers --output=go-template=\"{{.metadata.name}}\"", returnStdout: true).trim()
 
-                    if (namespaceExists.empty) {
-                        bat "kubectl --kubeconfig %KUBECONFIG% create namespace %NAMESPACE%"
+                    if (namespaceExists.isEmpty()) {
+                        sh "kubectl --kubeconfig \$KUBECONFIG_ENV create namespace \$NAMESPACE_ENV"
                     }
                 }
             }
@@ -25,12 +33,12 @@ pipeline {
         stage('Deploy WordPress Chart') {
             steps {
                 script {
-                    def chartExists = bat(script: "%HELM_PATH% list -n %NAMESPACE% --short | findstr /C:\"%RELEASE_NAME%\"", returnStdout: true).trim()
+                    def chartExists = sh(script: "\$HELM_PATH_ENV list -n \$NAMESPACE_ENV --short | grep -q \$RELEASE_NAME_ENV && echo true || echo false", returnStdout: true).trim()
 
-                    if (chartExists.empty) {
-                        bat "%HELM_PATH% install %RELEASE_NAME% %CHART_PATH% --values %VALUES_FILE% --namespace %NAMESPACE% --set nameOverride=%CHART_NAME% --kubeconfig %KUBECONFIG%"
+                    if (chartExists == 'false') {
+                        sh "\$HELM_PATH_ENV install \$RELEASE_NAME_ENV \$CHART_PATH_ENV --values \$VALUES_FILE_ENV --namespace \$NAMESPACE_ENV --set nameOverride=\$CHART_NAME_ENV --kubeconfig \$KUBECONFIG_ENV"
                     } else {
-                        bat "%HELM_PATH% upgrade %RELEASE_NAME% %CHART_PATH% --values %VALUES_FILE% --namespace %NAMESPACE% --set nameOverride=%CHART_NAME% --kubeconfig %KUBECONFIG%"
+                        sh "\$HELM_PATH_ENV upgrade \$RELEASE_NAME_ENV \$CHART_PATH_ENV --values \$VALUES_FILE_ENV --namespace \$NAMESPACE_ENV --set nameOverride=\$CHART_NAME_ENV --kubeconfig \$KUBECONFIG_ENV"
                     }
                 }
             }
