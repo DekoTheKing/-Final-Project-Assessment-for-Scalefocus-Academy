@@ -1,4 +1,4 @@
-# -Final-Project-Assessment-for-Scalefocus-Academy
+# Final-Project-Assessment-for-Scalefocus-Academy
 1. Installed prerequisites jenkins,kubernetes,helm.
 2. Clonning the worpress chart to my repo
 3. Setting up helm (upgrading dependencies)
