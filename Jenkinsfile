@@ -15,7 +15,7 @@ pipeline {
                             echo 'Namespace "wp" already exists.'
                         } else {
                             echo 'Namespace "wp" does not exist. Creating...'
-                            sh 'kubectl create namespace wp'
+                            bat 'kubectl create namespace wp'
                             echo 'Namespace "wp" created successfully.'
                         }
                     } catch (Exception e) {
@@ -39,7 +39,7 @@ pipeline {
                             echo 'WordPress deployment exists in namespace "wp".'
                         } else {
                             echo 'WordPress deployment does not exist in namespace "wp". Installing Helm chart...'
-                            sh 'helm install final-project-wp-scalefocus /Users/dejan/Documents/GitHub/Final-Project-Assessment-for-Scalefocus-Academy/charts/wordpress-chart'
+                            bat 'helm install final-project-wp-scalefocus /Users/dejan/Documents/GitHub/Final-Project-Assessment-for-Scalefocus-Academy/charts/wordpress-chart'
                             echo 'Helm chart installed successfully.'
                         }
                     } catch (Exception e) {
