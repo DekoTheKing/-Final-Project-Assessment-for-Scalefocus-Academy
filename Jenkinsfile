@@ -1,9 +1,17 @@
 pipeline {
   agent any
   environment {
-    KUBECONFIG = '/Users/dejan/.kube/config'
+    // Set the KUBECONFIG environment variable
+    KUBECONFIG = 'C:/Users/dejan/.kube/config'
   }
-    stage('Deploymnet start') {
+  stages {
+    stage('Verify') {
+      steps {
+        // This command verifies that the authentication and configuration are working correctly
+        bat 'kubectl get services'
+      }
+    }
+    stage('Deploy : final-project-wp-scalefocus.') {
       steps {
         script {
           try {
@@ -21,6 +29,7 @@ pipeline {
             bat 'helm dependency build ./bitnami/wordpress'
             bat 'helm install final-project-wp-scalefocus ./bitnami/wordpress -f ./bitnami/wordpress/values.yaml'
           } catch (Exception e) {
+            // Handle any deployment errors
             error "Deployment failed: ${e.getMessage()}"
           }
         }
