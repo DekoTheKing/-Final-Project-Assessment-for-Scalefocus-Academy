@@ -43,5 +43,11 @@ pipeline {
                 }
             }
         }
+        stage('Port forward') {
+            steps {
+                sleep time: 60, unit: 'SECONDS'
+                 bat "kubectl port-forward --namespace wp svc/final-project-wp-scalefocus-wordpress 80:80" //We have a wordpress user's blog :)
+            }
+        }
     }
 }
