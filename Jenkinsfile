@@ -1,53 +1,30 @@
 pipeline {
-    agent any
-
-    environment {
-        CHART_NAME = 'final-project-wp-scalefocus'
-        RELEASE_NAME = 'my-wordpress'
-        CHART_PATH = '/Users/dejan/Documents/GitHub/Final-Project-Assessment-for-Scalefocus-Academy/bitnami/wordpress/Chart.yaml'
-        VALUES_FILE = '/Users/dejan/Documents/GitHub/Final-Project-Assessment-for-Scalefocus-Academy/charts/bitnami/wordpress/values.yaml'
-        NAMESPACE = 'wp'
-        KUBECONFIG = '/Users/dejan/.kube/config'
-        HELM_PATH = '/ProgramData/chocolatey/bin/helm.exe'
+  agent any
+  environment {
+    KUBECONFIG = '/Users/dejan/.kube/config'
+  }
+    stage('Deploymnet start') {
+      steps {
+        script {
+          try {
+            // Check if the namespace exists
+            def namespaceExists = bat(script: 'kubectl get namespace default', returnStatus: true) == 0
+            if (!namespaceExists) {
+              // Create the namespace
+              bat 'kubectl create namespace wp'
+            }
+            else
+            {
+                bat 'kubectl get services'
+            }
+            // Deploy the application using Helm
+            bat 'helm dependency build ./bitnami/wordpress'
+            bat 'helm install final-project-wp-scalefocus ./bitnami/wordpress -f ./bitnami/wordpress/values.yaml'
+          } catch (Exception e) {
+            error "Deployment failed: ${e.getMessage()}"
+          }
+        }
+      }
     }
-
-    stages {
-        stage('Check and Create Namespace') {
-            steps {
-                script {
-                    def namespaceExists = bat(
-                        script: "kubectl --kubeconfig %KUBECONFIG% get namespace %NAMESPACE% --no-headers --output=go-template=\"{{.metadata.name}}\"",
-                        returnStdout: true
-                    ).trim()
-
-                    if (namespaceExists.empty) {
-                        bat "kubectl --kubeconfig %KUBECONFIG% create namespace %NAMESPACE%"
-                    }
-                }
-            }
-        }
-
-        stage('Deploy WordPress Chart') {
-            steps {
-                script {
-                    def chartExists = bat(
-                        script: "%HELM_PATH% list -n %NAMESPACE% --short | findstr /C:\"%RELEASE_NAME%\"",
-                        returnStdout: true
-                    ).trim()
-
-                    if (chartExists.empty) {
-                        bat "%HELM_PATH% install %RELEASE_NAME% %CHART_PATH% --values %VALUES_FILE% --namespace %NAMESPACE% --set nameOverride=%CHART_NAME% --kubeconfig %KUBECONFIG%"
-                    } else {
-                        bat "%HELM_PATH% upgrade %RELEASE_NAME% %CHART_PATH% --values %VALUES_FILE% --namespace %NAMESPACE% --set nameOverride=%CHART_NAME% --kubeconfig %KUBECONFIG%"
-                    }
-                }
-            }
-        }
-        stage('Port forward') {
-            steps {
-                sleep time: 60, unit: 'SECONDS'
-                 bat "kubectl port-forward --namespace wp svc/final-project-wp-scalefocus-wordpress 80:80" //We have a wordpress user's blog :)
-            }
-        }
-    }
+  }
 }
