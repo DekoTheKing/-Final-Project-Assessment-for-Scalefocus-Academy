@@ -1,51 +1,39 @@
 pipeline {
     agent any
     environment {
-        KUBECONFIG = '/Users/dejan/.kube/config'
-    }   
+        CHART_NAME = 'final-project-wp-scalefocus'
+        RELEASE_NAME = 'my-wordpress'
+        CHART_PATH = 'wordpress/Chart.yaml'
+        VALUES_FILE = 'wordpress/values.yaml'
+        NAMESPACE = 'wp'
+        KUBECONFIG = 'C:/Users/dejan/.kube/config'
+        HELM_PATH = 'C:/ProgramData/chocolatey/bin/helm.exe'
+    }
     stages {
-         stage('Check or Create Namespace') {
+        stage('Check and Create Namespace') {
             steps {
                 script {
-                    def namespace = 'wp'
-                    def namespaceExists = bat(returnStatus: true, script: "kubectl get namespace ${namespace}")
-                    
-                    if (namespaceExists == 0) {
-                        echo "Namespace '${namespace}' exists."
-                    } else {
-                        bat "kubectl create namespace ${namespace}"
+                    def namespaceExists = bat(script: "kubectl --kubeconfig %KUBECONFIG% get namespace %NAMESPACE% --no-headers --output=go-template=\"{{.metadata.name}}\"", returnStdout: true).trim()
+
+                    if (namespaceExists.empty) {
+                        bat "kubectl --kubeconfig %KUBECONFIG% create namespace %NAMESPACE%"
                     }
                 }
             }
         }
-        
-    
-        stage('Check and Install WordPress') {
+
+        stage('Deploy WordPress Chart') {
             steps {
                 script {
-                    def chartName = 'wordpress'
-                    def releaseName = 'final-project-wp-scalefocus'
-                    def chartInstalled = bat(
-                        script: "helm list -q ${releaseName}",
-                        returnStatus: true
-                    )
-                    
-                    if (chartInstalled != 0) {
-                        bat "helm install ${releaseName} /Users/dejan/Documents/GitHub/Final-Project-Assessment-for-Scalefocus-Academy/charts/bitnami/wordpress -n wp -f /Users/dejan/Documents/GitHub/Final-Project-Assessment-for-Scalefocus-Academy/charts/bitnami/wordpress/values.yaml"
+                    def chartExists = bat(script: "%HELM_PATH% list -n %NAMESPACE% --short | findstr /C:\"%RELEASE_NAME%\"", returnStdout: true).trim()
+
+                    if (chartExists.empty) {
+                        bat "%HELM_PATH% install %RELEASE_NAME% %CHART_PATH% --values %VALUES_FILE% --namespace %NAMESPACE% --set nameOverride=%CHART_NAME% --kubeconfig %KUBECONFIG%"
                     } else {
-                        echo "WordPress chart is already installed."
+                        bat "%HELM_PATH% upgrade %RELEASE_NAME% %CHART_PATH% --values %VALUES_FILE% --namespace %NAMESPACE% --set nameOverride=%CHART_NAME% --kubeconfig %KUBECONFIG%"
                     }
                 }
             }
-        }       
-        stage('Port forwarding') {
-            steps {
-  
-				sleep time: 60, unit: 'SECONDS'
-			    bat "kubectl port-forward --namespace wp svc/final-project-wp-scalefocus-wordpress 80:80" //We have a wordpress user's blog :)
-            }
         }
-        
-        
     }
 }
